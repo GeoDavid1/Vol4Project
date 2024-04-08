@@ -98,20 +98,23 @@ def K_ddelta(delta, vx, vy, lmb=20, cushion=.1, L=.5, M=3.):
 
 def plot_track():
     X,Y = np.meshgrid(np.linspace(-5,5,600),np.linspace(-5,5,600))
-    Z = C(X,Y, W1=3)
+    Z = C(X,Y, W1=1)
 
     fig = plt.figure(figsize=(12,12))
     ax = fig.add_subplot(121, projection='3d')
     ax.plot_surface(X,Y,Z,edgecolor=None,linewidth=0)
     ax.set_zlim(0,3)
     ax.view_init(elev=84,azim=90)
+    ax.axis("off")
+    ax.set_title("3D View")
 
     ax2 = fig.add_subplot(122)
     ax2.contour(X, Y, Z)
     ax2.set_xbound([-4,4])
-    ax2.set_ybound([-7,7])
+    ax2.set_ybound([-3,3])
+    ax2.set_title("2D Projection")
 
-    plt.axis('off')
+    ax2.axis('off')
     plt.show()
 
 def naive_system():
@@ -145,12 +148,12 @@ def naive_system():
     
     guess = np.ones((8, n))
 
-    # path_x = np.concatenate((np.linspace(-1.1, 2.1, 100), 2.1*np.ones(75), np.linspace(1.1, 2.1, 25)[::-1]))
-    # path_y = np.concatenate((-1.1*np.ones(100), np.linspace(-1.1,1.1,75), 1.1*np.ones(25)))
+    path_x = np.concatenate((np.linspace(-1.1, 2.1, 100), 2.1*np.ones(75), np.linspace(1.1, 2.1, 25)[::-1]))
+    path_y = np.concatenate((-1.1*np.ones(100), np.linspace(-1.1,1.1,75), 1.1*np.ones(25)))
 
 
-    # guess[0] = path_x
-    # guess[1] = path_y
+    guess[0] = path_x
+    guess[1] = path_y
     p0 = np.array([.5])
 
     sol = solve_bvp(ode, bc, t, guess, p0, max_nodes=30000)
@@ -169,8 +172,7 @@ def naive_system():
     plt.xlim([-4,4])
     plt.ylim([-3,3])
     plt.legend()
-    plt.title(f"No initial guess: {sol.p[0]:.2F} seconds")
-    plt.savefig("no_guess")
+    plt.title(f"{sol.p[0]:.2F} seconds")
     plt.show()
 
     return sol.p[0]
