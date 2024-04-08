@@ -1,5 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.integrate import solve_bvp
 
 def obstacle(x,y,W1=1,r=(1,1),c=(0,0)):
     '''
@@ -113,4 +114,64 @@ def plot_track():
     plt.axis('off')
     plt.show()
 
-plot_track()
+def naive_system():
+
+    W2 = .05
+    n = 200
+    t = np.linspace(0, 1, n)
+
+    C0 = C(0,0)
+
+    def ode(t, s, p):
+        return p[0] * np.array([
+            s[2],
+            s[3],
+            1/(2*W2)*s[6],
+            1/(2*W2)*s[7],
+            C_dx(s[0], s[1]),
+            C_dy(s[0], s[1]),
+            -s[4],
+            -s[5]
+        ])
+    
+    def bc(ya, yb, p):
+        return np.array([
+            ya[0] + 1, ya[1] + 1.25, ya[2], ya[3], yb[0] - 1, yb[1] - 1.25, yb[2], yb[3],
+            
+            # H(tf) = 0
+            yb[4]*yb[2] + yb[5]*yb[3] + yb[6]**2/(2*W2) + yb[7]**2/(2*W2) - (1 + C0 + (yb[6]**2+yb[7]**2/(4*W2)))
+        ])
+    
+    guess = np.ones((8, n))
+
+    path_x = np.concatenate((np.linspace(-1.25, 2.25, 100), 2.25*np.ones(75), np.linspace(1.25, 2.25, 25)[::-1]))
+    path_y = np.concatenate((-1.25*np.ones(100), np.linspace(-1.25,1.25,75), 1.25*np.ones(25)))
+
+
+    guess[0] = path_x
+    guess[1] = path_y
+    p0 = np.array([7])
+
+    sol = solve_bvp(ode, bc, t, guess, p0, max_nodes=30000)
+
+    X = np.linspace(-4, 4, 200)
+    Y = np.linspace(-3, 3, 200)
+    X, Y = np.meshgrid(X, Y)
+    Z = C(X, Y)
+
+
+    plt.plot(path_x, path_y, "--k", label="Inital Guess")
+    plt.contour(X, Y, Z)
+    plt.plot(sol.sol(t)[0], sol.sol(t)[1], "tab:orange", label="Path of Car")
+    plt.scatter(-1.25, -1.25, marker="*", color="red", label="Start")
+    plt.scatter(1.25, 1.25, marker="*", color="green", label="End")
+    plt.xlim([-4,4])
+    plt.ylim([-3,3])
+    plt.legend()
+    plt.title(f"Better initial guess: {sol.p[0]:.2F} seconds")
+    # plt.savefig("better_guess")
+    plt.show()
+
+    return sol.p[0]
+
+naive_system()
